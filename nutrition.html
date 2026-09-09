@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#1D2021">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Daily Cards">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<title>Meal cards</title>
+<style>
+  .backlink{margin:0 0 14px}
+  .backlink a{
+    display:inline-block;text-decoration:none;color:#6C716E;font-size:13px;font-weight:600;
+    border:1px solid #DADBD5;background:#fff;border-radius:3px;padding:7px 11px;
+  }
+  .backlink a:hover{color:#1D2021}
+</style>
+</head>
+<body>
+<style>
+  :root{
+    --ink:#1D2021;
+    --paper:#EEEFEC;
+    --card:#FFFFFF;
+    --rule:#DADBD5;
+    --work:#BE3226;
+    --rest:#54666D;
+    --muted:#6C716E;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font:400 16px/1.45 "Helvetica Neue",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:560px;margin:0 auto;padding:22px 16px 56px}
+
+  header h1{font-size:30px;line-height:1.05;font-weight:700;letter-spacing:-.02em;margin:2px 0 6px}
+  header .goal{font-size:14px;color:var(--muted);margin:0}
+  header .meta{font-size:13px;color:var(--muted);margin:10px 0 0;padding-top:10px;border-top:1px solid var(--rule)}
+
+  .totals{display:flex;margin:14px 0 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+  .totals div{flex:1;padding:10px 0}
+  .totals b{display:block;font-size:19px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+  .totals span{display:block;font-size:11px;color:var(--muted);margin-top:4px}
+
+  .tabin{position:absolute;width:1px;height:1px;opacity:0;margin:0}
+
+  nav{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0 16px}
+  nav label{
+    flex:1 1 30%;padding:9px 4px 8px;border:1px solid var(--rule);background:var(--card);
+    color:var(--muted);font:600 13px/1 inherit;border-radius:3px;cursor:pointer;text-align:center;
+  }
+  nav label .d{display:block;font-size:9px;font-weight:400;margin-top:4px;letter-spacing:.02em}
+
+  .card{display:none;background:var(--card);border:1px solid var(--rule);border-radius:4px;overflow:hidden}
+  .top{display:flex;align-items:stretch;border-bottom:1px solid var(--rule)}
+  .num{
+    flex:0 0 74px;background:var(--work);color:#fff;
+    display:flex;flex-direction:column;justify-content:center;align-items:center;padding:16px 0;
+  }
+  .notes-card .num{background:var(--rest)}
+  .num b{font-size:34px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+  .num span{font-size:10px;margin-top:5px;opacity:.85}
+  .top-t{padding:14px 16px;align-self:center}
+  .top-t h2{margin:0;font-size:19px;font-weight:700;letter-spacing:-.01em}
+  .top-t p{margin:3px 0 0;font-size:13px;color:var(--muted)}
+
+  .band{padding:11px 16px;background:#F6F6F3;border-bottom:1px solid var(--rule);font-size:13.5px;color:#3C4142}
+  .band b{font-weight:700;color:var(--ink)}
+
+  /* option selector inside a meal card */
+  .subnav{display:flex;flex-wrap:wrap;gap:5px;padding:12px 16px;border-bottom:1px solid var(--rule)}
+  .subnav label{
+    flex:1 1 30%;min-width:88px;padding:8px 5px 7px;border:1px solid var(--rule);background:var(--card);
+    color:var(--muted);font:700 15px/1 inherit;font-variant-numeric:tabular-nums;
+    border-radius:3px;cursor:pointer;text-align:center;
+  }
+  .subnav label .d{display:block;font-size:9.5px;font-weight:400;margin-top:4px;line-height:1.25;color:var(--muted)}
+
+  .opt{display:none}
+  .opt h3{
+    margin:0;padding:11px 16px;font-size:13px;font-weight:700;
+    border-bottom:1px solid var(--rule);background:#FAFAF8;
+  }
+  .opt h3 em{font-style:normal;font-weight:400;color:var(--muted)}
+
+  ol.ex{list-style:none;margin:0;padding:0}
+  ol.ex li{border-bottom:1px solid var(--rule)}
+  ol.ex li:last-child{border-bottom:0}
+  ol.ex label{display:block;padding:13px 16px;cursor:pointer}
+  .tick{position:absolute;width:1px;height:1px;opacity:0;margin:0}
+  .row{display:flex;justify-content:space-between;align-items:baseline;gap:14px}
+  .name{font-weight:600;font-size:16px}
+  .pres{
+    flex:0 0 auto;font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;
+    letter-spacing:-.01em;color:var(--work);white-space:nowrap;
+  }
+  .cue{margin:4px 0 0;font-size:13.5px;color:var(--muted);max-width:44ch}
+  .tick:checked ~ .row .name,.tick:checked ~ .row .pres{text-decoration:line-through;color:#A8ACA9}
+  .tick:checked ~ .cue{color:#B6BAB7}
+  .tick:focus-visible ~ .row{outline:2px solid var(--work);outline-offset:3px}
+
+  .finish{padding:14px 16px;border-top:2px solid var(--ink);background:#FAFAF8}
+  .finish h3{margin:0 0 4px;font-size:13px;font-weight:700}
+  .finish p{margin:0;font-size:13.5px;color:#3C4142;max-width:52ch}
+  .finish p + p{margin-top:8px}
+
+  .swaps{list-style:none;margin:0;padding:0}
+  .swaps li{padding:12px 16px;border-bottom:1px solid var(--rule)}
+  .swaps li:last-child{border-bottom:0}
+  .swaps b{display:block;font-size:14px;font-weight:700}
+  .swaps span{display:block;font-size:13.5px;color:var(--muted);margin-top:3px;max-width:46ch}
+
+  footer{margin-top:26px;padding-top:14px;border-top:1px solid var(--rule);font-size:13px;color:var(--muted)}
+
+  #t-breakfast:checked ~ .wrap .card[data-key="breakfast"]{display:block}
+  #t-breakfast:checked ~ .wrap label[for="t-breakfast"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  #t-breakfast:focus-visible ~ .wrap label[for="t-breakfast"]{outline:2px solid var(--work);outline-offset:2px}
+  #t-lunch:checked ~ .wrap .card[data-key="lunch"]{display:block}
+  #t-lunch:checked ~ .wrap label[for="t-lunch"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  #t-lunch:focus-visible ~ .wrap label[for="t-lunch"]{outline:2px solid var(--work);outline-offset:2px}
+  #t-dinner:checked ~ .wrap .card[data-key="dinner"]{display:block}
+  #t-dinner:checked ~ .wrap label[for="t-dinner"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  #t-dinner:focus-visible ~ .wrap label[for="t-dinner"]{outline:2px solid var(--work);outline-offset:2px}
+  #t-snacks:checked ~ .wrap .card[data-key="snacks"]{display:block}
+  #t-snacks:checked ~ .wrap label[for="t-snacks"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  #t-snacks:focus-visible ~ .wrap label[for="t-snacks"]{outline:2px solid var(--work);outline-offset:2px}
+  #t-post:checked ~ .wrap .card[data-key="post"]{display:block}
+  #t-post:checked ~ .wrap label[for="t-post"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  #t-post:focus-visible ~ .wrap label[for="t-post"]{outline:2px solid var(--work);outline-offset:2px}
+  #t-notes:checked ~ .wrap .card[data-key="notes"]{display:block}
+  #t-notes:checked ~ .wrap label[for="t-notes"]{background:var(--rest);border-color:var(--rest);color:#fff}
+  #t-notes:focus-visible ~ .wrap label[for="t-notes"]{outline:2px solid var(--work);outline-offset:2px}
+  #o-breakfast-0:checked ~ .wrap .opt[data-id="o-breakfast-0"]{display:block}
+  #o-breakfast-0:checked ~ .wrap label[for="o-breakfast-0"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-breakfast-0:checked ~ .wrap label[for="o-breakfast-0"] .d{color:#fff;opacity:.8}
+  #o-breakfast-0:focus-visible ~ .wrap label[for="o-breakfast-0"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-breakfast-1:checked ~ .wrap .opt[data-id="o-breakfast-1"]{display:block}
+  #o-breakfast-1:checked ~ .wrap label[for="o-breakfast-1"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-breakfast-1:checked ~ .wrap label[for="o-breakfast-1"] .d{color:#fff;opacity:.8}
+  #o-breakfast-1:focus-visible ~ .wrap label[for="o-breakfast-1"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-breakfast-2:checked ~ .wrap .opt[data-id="o-breakfast-2"]{display:block}
+  #o-breakfast-2:checked ~ .wrap label[for="o-breakfast-2"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-breakfast-2:checked ~ .wrap label[for="o-breakfast-2"] .d{color:#fff;opacity:.8}
+  #o-breakfast-2:focus-visible ~ .wrap label[for="o-breakfast-2"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-breakfast-3:checked ~ .wrap .opt[data-id="o-breakfast-3"]{display:block}
+  #o-breakfast-3:checked ~ .wrap label[for="o-breakfast-3"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-breakfast-3:checked ~ .wrap label[for="o-breakfast-3"] .d{color:#fff;opacity:.8}
+  #o-breakfast-3:focus-visible ~ .wrap label[for="o-breakfast-3"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-lunch-0:checked ~ .wrap .opt[data-id="o-lunch-0"]{display:block}
+  #o-lunch-0:checked ~ .wrap label[for="o-lunch-0"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-lunch-0:checked ~ .wrap label[for="o-lunch-0"] .d{color:#fff;opacity:.8}
+  #o-lunch-0:focus-visible ~ .wrap label[for="o-lunch-0"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-lunch-1:checked ~ .wrap .opt[data-id="o-lunch-1"]{display:block}
+  #o-lunch-1:checked ~ .wrap label[for="o-lunch-1"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-lunch-1:checked ~ .wrap label[for="o-lunch-1"] .d{color:#fff;opacity:.8}
+  #o-lunch-1:focus-visible ~ .wrap label[for="o-lunch-1"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-lunch-2:checked ~ .wrap .opt[data-id="o-lunch-2"]{display:block}
+  #o-lunch-2:checked ~ .wrap label[for="o-lunch-2"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-lunch-2:checked ~ .wrap label[for="o-lunch-2"] .d{color:#fff;opacity:.8}
+  #o-lunch-2:focus-visible ~ .wrap label[for="o-lunch-2"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-lunch-3:checked ~ .wrap .opt[data-id="o-lunch-3"]{display:block}
+  #o-lunch-3:checked ~ .wrap label[for="o-lunch-3"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-lunch-3:checked ~ .wrap label[for="o-lunch-3"] .d{color:#fff;opacity:.8}
+  #o-lunch-3:focus-visible ~ .wrap label[for="o-lunch-3"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-lunch-4:checked ~ .wrap .opt[data-id="o-lunch-4"]{display:block}
+  #o-lunch-4:checked ~ .wrap label[for="o-lunch-4"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-lunch-4:checked ~ .wrap label[for="o-lunch-4"] .d{color:#fff;opacity:.8}
+  #o-lunch-4:focus-visible ~ .wrap label[for="o-lunch-4"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-dinner-0:checked ~ .wrap .opt[data-id="o-dinner-0"]{display:block}
+  #o-dinner-0:checked ~ .wrap label[for="o-dinner-0"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-dinner-0:checked ~ .wrap label[for="o-dinner-0"] .d{color:#fff;opacity:.8}
+  #o-dinner-0:focus-visible ~ .wrap label[for="o-dinner-0"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-dinner-1:checked ~ .wrap .opt[data-id="o-dinner-1"]{display:block}
+  #o-dinner-1:checked ~ .wrap label[for="o-dinner-1"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-dinner-1:checked ~ .wrap label[for="o-dinner-1"] .d{color:#fff;opacity:.8}
+  #o-dinner-1:focus-visible ~ .wrap label[for="o-dinner-1"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-dinner-2:checked ~ .wrap .opt[data-id="o-dinner-2"]{display:block}
+  #o-dinner-2:checked ~ .wrap label[for="o-dinner-2"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-dinner-2:checked ~ .wrap label[for="o-dinner-2"] .d{color:#fff;opacity:.8}
+  #o-dinner-2:focus-visible ~ .wrap label[for="o-dinner-2"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-dinner-3:checked ~ .wrap .opt[data-id="o-dinner-3"]{display:block}
+  #o-dinner-3:checked ~ .wrap label[for="o-dinner-3"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-dinner-3:checked ~ .wrap label[for="o-dinner-3"] .d{color:#fff;opacity:.8}
+  #o-dinner-3:focus-visible ~ .wrap label[for="o-dinner-3"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-dinner-4:checked ~ .wrap .opt[data-id="o-dinner-4"]{display:block}
+  #o-dinner-4:checked ~ .wrap label[for="o-dinner-4"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-dinner-4:checked ~ .wrap label[for="o-dinner-4"] .d{color:#fff;opacity:.8}
+  #o-dinner-4:focus-visible ~ .wrap label[for="o-dinner-4"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-dinner-5:checked ~ .wrap .opt[data-id="o-dinner-5"]{display:block}
+  #o-dinner-5:checked ~ .wrap label[for="o-dinner-5"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-dinner-5:checked ~ .wrap label[for="o-dinner-5"] .d{color:#fff;opacity:.8}
+  #o-dinner-5:focus-visible ~ .wrap label[for="o-dinner-5"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-dinner-6:checked ~ .wrap .opt[data-id="o-dinner-6"]{display:block}
+  #o-dinner-6:checked ~ .wrap label[for="o-dinner-6"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-dinner-6:checked ~ .wrap label[for="o-dinner-6"] .d{color:#fff;opacity:.8}
+  #o-dinner-6:focus-visible ~ .wrap label[for="o-dinner-6"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-snacks-0:checked ~ .wrap .opt[data-id="o-snacks-0"]{display:block}
+  #o-snacks-0:checked ~ .wrap label[for="o-snacks-0"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-snacks-0:checked ~ .wrap label[for="o-snacks-0"] .d{color:#fff;opacity:.8}
+  #o-snacks-0:focus-visible ~ .wrap label[for="o-snacks-0"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-snacks-1:checked ~ .wrap .opt[data-id="o-snacks-1"]{display:block}
+  #o-snacks-1:checked ~ .wrap label[for="o-snacks-1"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-snacks-1:checked ~ .wrap label[for="o-snacks-1"] .d{color:#fff;opacity:.8}
+  #o-snacks-1:focus-visible ~ .wrap label[for="o-snacks-1"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-snacks-2:checked ~ .wrap .opt[data-id="o-snacks-2"]{display:block}
+  #o-snacks-2:checked ~ .wrap label[for="o-snacks-2"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-snacks-2:checked ~ .wrap label[for="o-snacks-2"] .d{color:#fff;opacity:.8}
+  #o-snacks-2:focus-visible ~ .wrap label[for="o-snacks-2"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-snacks-3:checked ~ .wrap .opt[data-id="o-snacks-3"]{display:block}
+  #o-snacks-3:checked ~ .wrap label[for="o-snacks-3"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-snacks-3:checked ~ .wrap label[for="o-snacks-3"] .d{color:#fff;opacity:.8}
+  #o-snacks-3:focus-visible ~ .wrap label[for="o-snacks-3"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-snacks-4:checked ~ .wrap .opt[data-id="o-snacks-4"]{display:block}
+  #o-snacks-4:checked ~ .wrap label[for="o-snacks-4"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-snacks-4:checked ~ .wrap label[for="o-snacks-4"] .d{color:#fff;opacity:.8}
+  #o-snacks-4:focus-visible ~ .wrap label[for="o-snacks-4"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-post-0:checked ~ .wrap .opt[data-id="o-post-0"]{display:block}
+  #o-post-0:checked ~ .wrap label[for="o-post-0"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-post-0:checked ~ .wrap label[for="o-post-0"] .d{color:#fff;opacity:.8}
+  #o-post-0:focus-visible ~ .wrap label[for="o-post-0"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-post-1:checked ~ .wrap .opt[data-id="o-post-1"]{display:block}
+  #o-post-1:checked ~ .wrap label[for="o-post-1"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-post-1:checked ~ .wrap label[for="o-post-1"] .d{color:#fff;opacity:.8}
+  #o-post-1:focus-visible ~ .wrap label[for="o-post-1"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-post-2:checked ~ .wrap .opt[data-id="o-post-2"]{display:block}
+  #o-post-2:checked ~ .wrap label[for="o-post-2"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-post-2:checked ~ .wrap label[for="o-post-2"] .d{color:#fff;opacity:.8}
+  #o-post-2:focus-visible ~ .wrap label[for="o-post-2"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-post-3:checked ~ .wrap .opt[data-id="o-post-3"]{display:block}
+  #o-post-3:checked ~ .wrap label[for="o-post-3"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-post-3:checked ~ .wrap label[for="o-post-3"] .d{color:#fff;opacity:.8}
+  #o-post-3:focus-visible ~ .wrap label[for="o-post-3"]{outline:2px solid var(--ink);outline-offset:2px}
+  #o-post-4:checked ~ .wrap .opt[data-id="o-post-4"]{display:block}
+  #o-post-4:checked ~ .wrap label[for="o-post-4"]{background:var(--work);border-color:var(--work);color:#fff}
+  #o-post-4:checked ~ .wrap label[for="o-post-4"] .d{color:#fff;opacity:.8}
+  #o-post-4:focus-visible ~ .wrap label[for="o-post-4"]{outline:2px solid var(--ink);outline-offset:2px}
+
+  @media print{
+    body{background:#fff}
+    nav,.subnav{display:none}
+    .card{display:block !important;page-break-after:always;border:0}
+    .opt{display:block !important}
+    .wrap{max-width:none}
+  }
+</style>
+
+<input class="tabin" type="radio" name="meal" id="t-breakfast" checked>
+<input class="tabin" type="radio" name="meal" id="t-lunch">
+<input class="tabin" type="radio" name="meal" id="t-dinner">
+<input class="tabin" type="radio" name="meal" id="t-snacks">
+<input class="tabin" type="radio" name="meal" id="t-post">
+<input class="tabin" type="radio" name="meal" id="t-notes">
+<input class="tabin" type="radio" name="opt-breakfast" id="o-breakfast-0" checked>
+<input class="tabin" type="radio" name="opt-breakfast" id="o-breakfast-1">
+<input class="tabin" type="radio" name="opt-breakfast" id="o-breakfast-2">
+<input class="tabin" type="radio" name="opt-breakfast" id="o-breakfast-3">
+<input class="tabin" type="radio" name="opt-lunch" id="o-lunch-0" checked>
+<input class="tabin" type="radio" name="opt-lunch" id="o-lunch-1">
+<input class="tabin" type="radio" name="opt-lunch" id="o-lunch-2">
+<input class="tabin" type="radio" name="opt-lunch" id="o-lunch-3">
+<input class="tabin" type="radio" name="opt-lunch" id="o-lunch-4">
+<input class="tabin" type="radio" name="opt-dinner" id="o-dinner-0" checked>
+<input class="tabin" type="radio" name="opt-dinner" id="o-dinner-1">
+<input class="tabin" type="radio" name="opt-dinner" id="o-dinner-2">
+<input class="tabin" type="radio" name="opt-dinner" id="o-dinner-3">
+<input class="tabin" type="radio" name="opt-dinner" id="o-dinner-4">
+<input class="tabin" type="radio" name="opt-dinner" id="o-dinner-5">
+<input class="tabin" type="radio" name="opt-dinner" id="o-dinner-6">
+<input class="tabin" type="radio" name="opt-snacks" id="o-snacks-0" checked>
+<input class="tabin" type="radio" name="opt-snacks" id="o-snacks-1">
+<input class="tabin" type="radio" name="opt-snacks" id="o-snacks-2">
+<input class="tabin" type="radio" name="opt-snacks" id="o-snacks-3">
+<input class="tabin" type="radio" name="opt-snacks" id="o-snacks-4">
+<input class="tabin" type="radio" name="opt-post" id="o-post-0" checked>
+<input class="tabin" type="radio" name="opt-post" id="o-post-1">
+<input class="tabin" type="radio" name="opt-post" id="o-post-2">
+<input class="tabin" type="radio" name="opt-post" id="o-post-3">
+<input class="tabin" type="radio" name="opt-post" id="o-post-4">
+
+<div class="wrap">
+  <p class="backlink"><a href="./">&larr; All cards</a></p>
+  
+  <header>
+    <p class="goal">Nutrition guidance &mdash; 107 kg</p>
+    <h1>Daily meal cards</h1>
+    <div class="totals">
+      <div><b>2400</b><span>calories</span></div>
+      <div><b>295g</b><span>carbs</span></div>
+      <div><b>58g</b><span>fats</span></div>
+      <div><b>190g</b><span>protein</span></div>
+    </div>
+    <p class="meta">3&ndash;4 litres of water minimum every day. Pick a meal, then pick an option. Tap an ingredient to cross it off as you weigh it out.</p>
+  </header>
+
+  <nav>
+    <label for="t-breakfast">Breakfast<span class="d">4 options</span></label>
+    <label for="t-lunch">Lunch<span class="d">5 options</span></label>
+    <label for="t-dinner">Dinner<span class="d">7 options</span></label>
+    <label for="t-snacks">Snacks<span class="d">5 options</span></label>
+    <label for="t-post">Post-workout<span class="d">5 options</span></label>
+    <label for="t-notes">Notes<span class="d">swaps</span></label>
+  </nav>
+
+  <section class="card" data-key="breakfast">
+    <div class="top"><div class="num"><b>40</b><span>g protein</span></div>
+    <div class="top-t"><h2>Breakfast</h2><p>4 options</p></div></div>
+    <div class="band"><b>65g</b> carbs &nbsp; <b>15g</b> fats &nbsp; <b>40g</b> protein</div>
+    <div class="subnav">
+      <label for="o-breakfast-0">1<span class="d">Oats &amp; whey</span></label>
+      <label for="o-breakfast-1">2<span class="d">Eggs on toast</span></label>
+      <label for="o-breakfast-2">3<span class="d">Oats &amp; eggs</span></label>
+      <label for="o-breakfast-3">4<span class="d">Bagel &amp; turkey</span></label>
+    </div>
+    <div class="opt" data-id="o-breakfast-0">
+      <h3>Option 1 <em>&middot; Oats &amp; whey</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Oats</span><span class="pres">60g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Semi-skimmed milk</span><span class="pres">250ml</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Whey protein</span><span class="pres">30g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Blueberries</span><span class="pres">100g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Peanut butter</span><span class="pres">15g</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-breakfast-1">
+      <h3>Option 2 <em>&middot; Eggs on toast</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Wholemeal bread</span><span class="pres">2 slices</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Egg whites</span><span class="pres">150g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Whole eggs</span><span class="pres">2</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Avocado</span><span class="pres">50g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Small orange</span><span class="pres">1</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-breakfast-2">
+      <h3>Option 3 <em>&middot; Oats &amp; eggs</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Oats</span><span class="pres">50g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Whey protein</span><span class="pres">30g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Whole egg</span><span class="pres">1</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Egg whites</span><span class="pres">100g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Banana</span><span class="pres">1</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Peanut butter</span><span class="pres">10g</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-breakfast-3">
+      <h3>Option 4 <em>&middot; Bagel &amp; turkey</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Bagel</span><span class="pres">1</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Turkey rashers</span><span class="pres">4</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Whole eggs</span><span class="pres">2</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Banana</span><span class="pres">1</span></div></label></li>
+      </ol>
+    </div>
+    <div class="finish"><h3>Notes</h3><p><b>Milk.</b> Semi-skimmed can be swapped for any unsweetened nut milk.</p><p><b>Peanut butter.</b> Any nut butter works &mdash; try to get a natural jar.</p></div>
+  </section>
+
+  <section class="card" data-key="lunch">
+    <div class="top"><div class="num"><b>55</b><span>g protein</span></div>
+    <div class="top-t"><h2>Lunch</h2><p>5 options</p></div></div>
+    <div class="band"><b>70g</b> carbs &nbsp; <b>15g</b> fats &nbsp; <b>55g</b> protein</div>
+    <div class="subnav">
+      <label for="o-lunch-0">1<span class="d">Chicken wraps</span></label>
+      <label for="o-lunch-1">2<span class="d">Jacket potato</span></label>
+      <label for="o-lunch-2">3<span class="d">Tuna pasta</span></label>
+      <label for="o-lunch-3">4<span class="d">Steak sandwich</span></label>
+      <label for="o-lunch-4">5<span class="d">Cod &amp; potatoes</span></label>
+    </div>
+    <div class="opt" data-id="o-lunch-0">
+      <h3>Option 1 <em>&middot; Chicken wraps</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Large wholemeal wraps</span><span class="pres">2</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Cooked chicken</span><span class="pres">150g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Reduced fat cheese</span><span class="pres">30g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Salad</span><span class="pres">Free</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Light mayo</span><span class="pres">To taste</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-lunch-1">
+      <h3>Option 2 <em>&middot; Jacket potato</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Large jacket potato</span><span class="pres">1</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Cooked chicken</span><span class="pres">180g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Reduced fat cheese</span><span class="pres">30g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Large salad</span><span class="pres">Free</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Light mayo or dressing</span><span class="pres">To taste</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-lunch-2">
+      <h3>Option 3 <em>&middot; Tuna pasta</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Tuna</span><span class="pres">120g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Pasta</span><span class="pres">90g</span></div><p class="cue">Dry weight.</p></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Sweetcorn</span><span class="pres">100g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Light mayo</span><span class="pres">To taste</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Olive oil</span><span class="pres">10g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Apple</span><span class="pres">1</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-lunch-3">
+      <h3>Option 4 <em>&middot; Steak sandwich</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Wholemeal bread</span><span class="pres">2 slices</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Lean steak</span><span class="pres">150g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Reduced fat cheese</span><span class="pres">20g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Light mayo</span><span class="pres">To taste</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Apple</span><span class="pres">1</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-lunch-4">
+      <h3>Option 5 <em>&middot; Cod &amp; potatoes</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Cod</span><span class="pres">200g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Potatoes</span><span class="pres">350g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Peas</span><span class="pres">100g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Olive oil</span><span class="pres">10g</span></div></label></li>
+      </ol>
+    </div>
+    <div class="finish"><h3>Notes</h3><p><b>Salad and veggies.</b> No limit &mdash; packed with nutrients and they keep you full.</p><p><b>Sauces.</b> Any light sauce or dressing is fine. Salsa is very low calorie.</p></div>
+  </section>
+
+  <section class="card" data-key="dinner">
+    <div class="top"><div class="num"><b>50</b><span>g protein</span></div>
+    <div class="top-t"><h2>Dinner</h2><p>7 options</p></div></div>
+    <div class="band"><b>90g</b> carbs &nbsp; <b>20g</b> fats &nbsp; <b>50g</b> protein</div>
+    <div class="subnav">
+      <label for="o-dinner-0">1<span class="d">Beef pasta</span></label>
+      <label for="o-dinner-1">2<span class="d">Chicken &amp; rice</span></label>
+      <label for="o-dinner-2">3<span class="d">Salmon</span></label>
+      <label for="o-dinner-3">4<span class="d">Roast</span></label>
+      <label for="o-dinner-4">5<span class="d">Burger &amp; chips</span></label>
+      <label for="o-dinner-5">6<span class="d">Curry</span></label>
+      <label for="o-dinner-6">7<span class="d">Pizza</span></label>
+    </div>
+    <div class="opt" data-id="o-dinner-0">
+      <h3>Option 1 <em>&middot; Beef pasta</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Lean beef</span><span class="pres">150g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Pasta</span><span class="pres">100g</span></div><p class="cue">Dry weight.</p></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Passata sauce</span><span class="pres">150g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Reduced fat cheese</span><span class="pres">30g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Veggies</span><span class="pres">Large serving</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-dinner-1">
+      <h3>Option 2 <em>&middot; Chicken &amp; rice</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Chicken breast</span><span class="pres">180g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Cooked rice</span><span class="pres">250g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Avocado</span><span class="pres">50g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Olive oil</span><span class="pres">10g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Salad or veggies</span><span class="pres">Free</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-dinner-2">
+      <h3>Option 3 <em>&middot; Salmon</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Salmon</span><span class="pres">180g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Potatoes</span><span class="pres">350g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Olive oil</span><span class="pres">10g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Veggies</span><span class="pres">Large serving</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-dinner-3">
+      <h3>Option 4 <em>&middot; Roast</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Chicken breast</span><span class="pres">180g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Potatoes</span><span class="pres">300g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Gravy</span><span class="pres">100g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Carrots, broccoli, peas</span><span class="pres">Free</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Yorkshire pudding</span><span class="pres">1</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-dinner-4">
+      <h3>Option 5 <em>&middot; Burger &amp; chips</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">5% beef burger</span><span class="pres">150g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Wholemeal burger bun</span><span class="pres">1</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Reduced fat cheese</span><span class="pres">20g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">McCain Lighter chips</span><span class="pres">300g</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-dinner-5">
+      <h3>Option 6 <em>&middot; Curry</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Chicken breast</span><span class="pres">170g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Cooked rice</span><span class="pres">250g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Curry sauce</span><span class="pres">120g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Light naan</span><span class="pres">50g</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-dinner-6">
+      <h3>Option 7 <em>&middot; Pizza</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Large pizza base</span><span class="pres">1</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Chicken breast</span><span class="pres">120g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Reduced fat mozzarella</span><span class="pres">40g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Tomato sauce</span><span class="pres">To taste</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Peppers and onions</span><span class="pres">Free</span></div></label></li>
+      </ol>
+    </div>
+    <div class="finish"><h3>Notes</h3><p><b>Veggies.</b> Load the plate up, there's no limit on salad or vegetables.</p><p>Rice and potato weights are cooked weight. Pasta is dry weight.</p></div>
+  </section>
+
+  <section class="card" data-key="snacks">
+    <div class="top"><div class="num"><b>20</b><span>g protein</span></div>
+    <div class="top-t"><h2>Snacks</h2><p>5 options</p></div></div>
+    <div class="band"><b>30g</b> carbs &nbsp; <b>0g</b> fats &nbsp; <b>20g</b> protein</div>
+    <div class="subnav">
+      <label for="o-snacks-0">1<span class="d">Yoghurt &amp; berries</span></label>
+      <label for="o-snacks-1">2<span class="d">Bagel &amp; chicken</span></label>
+      <label for="o-snacks-2">3<span class="d">Tuna &amp; oat cakes</span></label>
+      <label for="o-snacks-3">4<span class="d">Chicken &amp; rice cakes</span></label>
+      <label for="o-snacks-4">5<span class="d">Protein cereal</span></label>
+    </div>
+    <div class="opt" data-id="o-snacks-0">
+      <h3>Option 1 <em>&middot; Yoghurt &amp; berries</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">0% Greek yoghurt</span><span class="pres">200g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Strawberries</span><span class="pres">100g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Honey</span><span class="pres">15g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Small orange</span><span class="pres">1</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-snacks-1">
+      <h3>Option 2 <em>&middot; Bagel &amp; chicken</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Lighter bagel</span><span class="pres">&frac12;</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Chicken or turkey</span><span class="pres">100g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Light cream cheese</span><span class="pres">10g</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-snacks-2">
+      <h3>Option 3 <em>&middot; Tuna &amp; oat cakes</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Tuna</span><span class="pres">100g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Oat cakes</span><span class="pres">5</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Small orange</span><span class="pres">1</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-snacks-3">
+      <h3>Option 4 <em>&middot; Chicken &amp; rice cakes</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Chicken or turkey</span><span class="pres">100g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Rice cakes</span><span class="pres">3</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Small banana</span><span class="pres">1</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Nut butter</span><span class="pres">5g</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-snacks-4">
+      <h3>Option 5 <em>&middot; Protein cereal</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Whey protein</span><span class="pres">30g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Rice Krispies or Coco Pops</span><span class="pres">40g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Semi-skimmed milk</span><span class="pres">150ml</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Strawberries</span><span class="pres">50g</span></div></label></li>
+      </ol>
+    </div>
+    <div class="finish"><h3>Notes</h3><p><b>Rice cakes.</b> Kallo flavoured are worth a look &mdash; blueberry, apple and beetroot.</p><p><b>Bread.</b> Wholemeal or sourdough bagels and pittas will keep you fuller for longer.</p></div>
+  </section>
+
+  <section class="card" data-key="post">
+    <div class="top"><div class="num"><b>25</b><span>g protein</span></div>
+    <div class="top-t"><h2>Post-workout</h2><p>5 options</p></div></div>
+    <div class="band"><b>40g</b> carbs &nbsp; <b>8g</b> fats &nbsp; <b>25g</b> protein</div>
+    <div class="subnav">
+      <label for="o-post-0">1<span class="d">Yoghurt &amp; banana</span></label>
+      <label for="o-post-1">2<span class="d">Eggs on toast</span></label>
+      <label for="o-post-2">3<span class="d">Shake &amp; rice cakes</span></label>
+      <label for="o-post-3">4<span class="d">Oats &amp; whey</span></label>
+      <label for="o-post-4">5<span class="d">Whey &amp; strawberries</span></label>
+    </div>
+    <div class="opt" data-id="o-post-0">
+      <h3>Option 1 <em>&middot; Yoghurt &amp; banana</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">0% Greek yoghurt</span><span class="pres">200g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Banana</span><span class="pres">1</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Mixed nuts</span><span class="pres">15g</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-post-1">
+      <h3>Option 2 <em>&middot; Eggs on toast</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Egg whites</span><span class="pres">2</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Whole egg</span><span class="pres">1</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Wholemeal bread</span><span class="pres">1 slice</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Small orange</span><span class="pres">1</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-post-2">
+      <h3>Option 3 <em>&middot; Shake &amp; rice cakes</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Whey protein</span><span class="pres">20g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Rice cakes</span><span class="pres">2</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Apple</span><span class="pres">1</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-post-3">
+      <h3>Option 4 <em>&middot; Oats &amp; whey</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Oats</span><span class="pres">30g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Whey protein</span><span class="pres">20g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Berries</span><span class="pres">50g</span></div></label></li>
+      </ol>
+    </div>
+    <div class="opt" data-id="o-post-4">
+      <h3>Option 5 <em>&middot; Whey &amp; strawberries</em></h3>
+      <ol class="ex">
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Whey protein</span><span class="pres">25g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Strawberries</span><span class="pres">150g</span></div></label></li>
+        <li><label><input class="tick" type="checkbox"><div class="row"><span class="name">Honey</span><span class="pres">10g</span></div></label></li>
+      </ol>
+    </div>
+    <div class="finish"><h3>Notes</h3><p>Whey can be mixed with water or any unsweetened nut milk.</p></div>
+  </section>
+
+  <section class="card notes-card" data-key="notes">
+    <div class="top"><div class="num"><b>4</b><span>litres</span></div>
+    <div class="top-t"><h2>Swaps and treats</h2><p>Off the bottom of the sheet</p></div></div>
+    <div class="band"><b>Water</b> 3&ndash;4 litres minimum a day.</div>
+    <ul class="swaps">
+      <li><b>Semi-skimmed milk</b><span>Swap for any unsweetened nut milk.</span></li>
+      <li><b>Peanut butter</b><span>Any nut butter. Try to get a natural jar.</span></li>
+      <li><b>Sauces and dressings</b><span>Any light sauce or dressing is fine. Salsa is very low calorie.</span></li>
+      <li><b>Bread</b><span>Wholemeal or sourdough bread, pittas and bagels keep you fuller for longer.</span></li>
+      <li><b>Salad and veggies</b><span>No limit. Packed with nutrients and they keep you full.</span></li>
+      <li><b>Rice cakes</b><span>Kallo flavoured &mdash; blueberry, apple and beetroot for flavour.</span></li>
+    </ul>
+    <div class="finish"><h3>In moderation</h3><p><b>Drinks.</b> Zero calorie drinks are fine in moderation, just don't drink them all day. Low sugar squash is fine. Two coffees with sugar-free syrup and a splash of milk.</p><p><b>Sweet treats.</b> Options hot chocolate in the evening, or 10 cal jelly.</p></div>
+  </section>
+
+  <footer>Taken straight from your nutrition sheet. Pasta and oats are dry weight, chicken and rice are cooked weight, as written there.</footer>
+</div>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
